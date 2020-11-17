@@ -73,7 +73,8 @@ module.exports = {
         errors: true
     },
     contentBase:distPath,
-    hot:true
+    hot:true,
+    open: true
   },
   performance: {
     hints: false, 

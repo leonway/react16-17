@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.less';
 import App from './App';
+import { isFSA } from 'flux-standard-action'
 // import App from './pages/DialogPage';
 
 
@@ -16,19 +17,48 @@ const reducer = (a,b)=>{
 
 // console.log(array1.reduce(reducer));
 
-function f1(arg) {
-  console.log('f1',arg);
-  return arg
+ //派发action 修改状态 通知订阅更新
+ const dispatch = (action) => {
+  if(!isFSA(action)){
+    throw new Error(`action is not a flux-standard-action, please use customMiddleware`);
+  }
+  console.log('真正的dispatch 触发了');
+  // currentState = reducer(currentState,action)
+  // currentListeners.forEach(listener=>listener())
 }
 
-function f2(arg) {
-  console.log('f2',arg);
-  return arg
+function f1(next) {
+  console.log('f1',next);
+  return (action)=>{
+    console.log('f1 dispatch 触发了');
+    if(action instanceof Function){
+
+    }else{
+      return next(action)
+    }
+  }
 }
 
-function f3(arg) {
-  console.log('f3',arg);
-  return arg
+function f2(next) {
+  console.log('f2',next);
+  return action=>{
+    console.log('f2 dispatch 触发了');
+    if(action instanceof Promise){
+
+    }else{
+      return next(action)
+    }
+  }
+}
+
+function f3(next) {
+  console.log('f3',next);
+  return (action)=>{
+    console.log('pre logger');
+    const returnValue = next(action)
+    console.log('after logger');
+    return returnValue
+  }
   // return new Promise((res)=>{
   //   setTimeout(() => {
   //     console.log('f3',arg);
@@ -58,9 +88,27 @@ const compose = (...fns)=>{
   return fns.reduce((a,b)=>(arg)=>a(b(arg)))
 }
 
-compose(f1,f2,f3)('omg')
+// compose(f1,f2,f3)('omg')
 
+// (next)=>()
+// (arg)=>a(b(arg))
 
+// (omg)=>a(b(omg))
+
+// compose(f1,f2,f3)
+const next0 = f1
+
+// const next1 = (arg)=>next0(f2(arg))
+
+// const next2 = (arg)=>next1(f3(arg))
+
+const next3 = arg=>((arg)=>((arg)=>f1(f2(arg)))(f3(arg)))(arg)
+
+// const superDispatch = next3(dispatch)
+
+// setTimeout(() => {
+//   superDispatch({type:'ADD'})
+// }, 3000);
 // const compose = (...fns)=>{
 //   console.log('----compose----');
 //   console.log(...fns);
@@ -91,3 +139,30 @@ compose(f1,f2,f3)('omg')
 //   (...args)=>((...args)=>f1(f2(...args)))
 //   )(f3(...args))
 // composeFunc('omg')
+
+
+const test1 = new Promise(res=>{
+  setTimeout(() => {
+    res(new Promise((a)=>{
+      setTimeout(() => {
+      a({type:'Add'})
+    }, 2000)
+   }))
+  }, 1000);
+})
+
+const p = test1.then(data=>{
+  console.log(data)
+  
+  return new Promise(res=>{
+    setTimeout(() => {
+      res({type:'delete'})
+    }, 3000);
+  }).then(data=>{
+    console.log(data);
+    return {type:'remove'}
+  })
+})
+p.then(data=>{
+  console.log(data);
+})

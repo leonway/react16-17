@@ -1,8 +1,10 @@
-// import {createStore, applyMiddleware, combineReducers} from "redux";
-import {createStore, applyMiddleware} from "../kredux/";
+// import { createStore, applyMiddleware, combineReducers} from "../../node_modules/redux/dist/redux";
+import {createStore, applyMiddleware, combineReducers} from "../kredux/";
 // import thunk from "redux-thunk"; // 异步解决方案
 // import logger from "redux-logger"; // 打印日志
 // import promise from "redux-promise"; // 处理promise
+
+import { logger, thunk, test, promise } from '../kredux/customMiddleware'
 // import isPromise from "is-promise";
 
 // 定义修改store state的规则
@@ -17,12 +19,27 @@ function countReducer(state = 0, action) {
   }
 }
 
+// 定义修改store state的规则
+function userReducer(state = {name:'liming',age:26}, action) {
+  switch (action.type) {
+    case "changeName":
+      return {...state,name:action.payload};
+    case "changeAge":
+      return {...state,age:action.payload};
+    default:
+      return state;
+  }
+}
+
 
 // logger要作为applyMiddleware的最后一个参数，不然不能保证action是plain object
 const store = createStore(
-  countReducer,
-  // combineReducers({count: countReducer}),
-  // applyMiddleware(promise, thunk, logger)
+  // countReducer,
+  combineReducers({
+    count: countReducer,
+    user:userReducer
+  }),
+  // applyMiddleware(promise,test,thunk, logger)
 );
 
 export default store;
